@@ -12,6 +12,12 @@ get_env(){
 #run browser
 SSHPORT=$(get_env SSHPORT)
 NBPORT=$(get_env NBPORT)
+WORKDIR=$(get_env WORKDIR)
+
+if ! test -d $WORKDIR; then
+  mkdir $WORKDIR
+fi
 
 docker-compose up &
+sleep 2
 firefox localhost:$NBPORT &

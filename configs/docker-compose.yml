@@ -3,6 +3,7 @@ version: '3'
 services: 
   jupyter-lab:
     image: jupyterlab-env
+    container_name: jupyterlab-env
     ports:
 #    - "8890:8888"
     - "$NBPORT:8888"

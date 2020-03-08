@@ -19,5 +19,5 @@ if ! test -d $WORKDIR; then
 fi
 
 docker-compose up &
-sleep 2
+sleep 1
 firefox localhost:$NBPORT &

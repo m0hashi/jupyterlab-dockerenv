@@ -1,0 +1,26 @@
+#version: '2.4'
+version: '3'
+
+
+services:
+  jupyterlab-env:
+    env_file: .env
+    build:
+      context: ./configs
+      dockerfile: Dockerfile
+      args:
+        UNAME: ${UNAME}
+        UID: ${UID}
+        GID: ${GID}
+        UPASSWD: ${UPASSWD}
+    container_name: jupyterlab-env
+    ports:
+      - "${NBPORT}:8888"
+      - "${SSHPORT}:22"
+    volumes:
+      - ./workspace:/home/${USER}/workspace
+      - /home/${USER}/.ssh:/home/${USER}/.ssh
+    user: "${UID}:${GID}"
+    entrypoint:  bash /home/${UNAME}/.local/bin/docker-entrypoint.sh ${UPASSWD}
+    
+    

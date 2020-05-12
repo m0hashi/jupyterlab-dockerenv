@@ -1,39 +1,62 @@
 #================================================================================
 # Make conda base environment
 #================================================================================
-FROM ubuntu:18.04  as conda-base
+FROM ubuntu:20.04  as conda-base
+SHELL ["/bin/bash", "-c"]
+
+ARG UNAME
+ARG GID
+ARG UID
+ARG UPASSWD
+
+ENV TZ Asia/Tokyo
+RUN apt-get update \
+  && apt-get install -y tzdata \
+  && rm -rf /var/lib/apt/lists/* \
+  && echo "${TZ}" > /etc/timezone \
+  && rm /etc/localtime \
+  && ln -s /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+  && dpkg-reconfigure -f noninteractive tzdata
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y wget && \
+    apt-get install -y sudo wget curl  bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 \
+            git mercurial subversion openssh-server && \
     apt-get clean
 
-# install anaconda
-ENV PATH /opt/conda/bin:$PATH
-RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh -O ~/anaconda.sh && \
-    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt-get install -y nodejs 
+
+#Add user
+RUN echo ${UNAME} ${GID}
+RUN groupadd  ${UNAME} -g ${GID}
+RUN useradd -u ${UID} -g ${UNAME} -m ${UNAME} --create-home --shel /bin/bash
+RUN usermod -aG sudo ${UNAME} && \
+    echo "Set disable_coredump false" >> /etc/sudo.conf
+RUN echo ${UNAME}:${UPASSWD} | chpasswd
+USER ${UNAME}
+WORKDIR /home/${UNAME}
+
+#Install Anaconda
+ENV PATH ~/.conda/bin:$PATH
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh -O ~/anaconda.sh && \
+    bash ~/anaconda.sh -b -p ~/.conda && \
     rm ~/anaconda.sh && \
-    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "PATH=~/.conda/bin/:$PATH" >> ~/.bashrc && \
+    echo ". ~/.conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo "conda activate base" >> ~/.bashrc && \
-    find /opt/conda/ -follow -type f -name '*.a' -delete && \
-    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
-    /opt/conda/bin/conda clean -afy
+    find ~/.conda/ -follow -type f -name '*.a' -delete && \
+    find ~/.conda/ -follow -type f -name '*.js.map' -delete && \
+    ~/.conda/bin/conda clean -afy
 
 #================================================================================
 # Make conda jupyterlab environment
 #================================================================================
 FROM conda-base as jupyterlab-base
-RUN apt-get update --fix-missing && \
-    apt-get install -y  bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 \
-            git mercurial subversion openssh-server && \
-    apt-get clean
-
-
 
 #install jupyter lab extensions
 #for  details, see -> https://qiita.com/canonrock16/items/d166c93087a4aafd2db4
-RUN conda install -c conda-forge jupyterlab 
-RUN conda install -c conda-forge nodejs
+#RUN conda install -c conda-forge jupyterlab=1.2.0 
+RUN conda install -c conda-forge jupyterlab
 RUN jupyter labextension install \
   @lckr/jupyterlab_variableinspector \
   @jupyterlab/toc \
@@ -42,31 +65,21 @@ RUN jupyter labextension install \
 
 #install ML library
 RUN conda install -c conda-forge \
-  lightgbm \
-  catboost
-
-# add user
-#RUN adduser kaggle --disabled-password
-#ARG user=kaggle
-#ARG passwd=passwd
-#RUN echo "${user}:${passwd}" | chpasswd
+  lightgbm catboost
 
 #================================================================================
 # Set startup configurations
 #================================================================================
 FROM jupyterlab-base
 
-#ssh-login setting
+ARG UNAME
+
+RUN mkdir ~/.local
+RUN mkdir ~/workspace
+RUN mkdir ~/.ssh
+COPY ./files/docker-entrypoint.sh /home/${UNAME}/.local/bin/docker-entrypoint.sh
+
+USER root
+RUN chown ${UNAME}:${UNAME} /home/${UNAME}/.local/bin/docker-entrypoint.sh
 RUN mkdir /var/run/sshd
-RUN echo 'root:root' | chpasswd
-RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-
-WORKDIR /workspace
-COPY ./files/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT [ "bash", "/usr/local/bin/docker-entrypoint.sh" ]
-#CMD ["jupyter-lab","--port","8888","--ip","0.0.0.0", "--allow-root" , "--notebook-dir=/workspace", "--NotebookApp.token=''"]
-
-
-
-
 

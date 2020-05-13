@@ -8,3 +8,5 @@ echo "UPASSWD=password" >> .env
 echo "NBPORT=8888" >> .env
 echo "SSHPORT=11111" >> .env
 mkdir workspace
+mkdir ~/.kaggle
+mkdir ~/.aws

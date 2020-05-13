@@ -20,6 +20,7 @@ services:
     volumes:
       - ./workspace:/home/${USER}/workspace
       - /home/${USER}/.ssh:/home/${USER}/.ssh
+      - /home/${USER}/.kaggle:/home/${USER}/.kaggle
     user: "${UID}:${GID}"
     entrypoint:  bash /home/${UNAME}/.local/bin/docker-entrypoint.sh ${UPASSWD}
     

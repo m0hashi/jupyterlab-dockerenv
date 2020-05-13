@@ -1,0 +1,16 @@
+#package list for apt install
+sudo
+wget 
+curl  
+bzip2 
+ca-certificates 
+libglib2.0-0 
+libxext6 
+libsm6 
+libxrender1
+git 
+vim
+htop
+mercurial 
+subversion 
+openssh-server 

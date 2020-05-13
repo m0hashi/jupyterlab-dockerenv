@@ -14,3 +14,5 @@ htop
 mercurial 
 subversion 
 openssh-server 
+graphviz
+unzip

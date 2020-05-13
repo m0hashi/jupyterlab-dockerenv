@@ -58,7 +58,7 @@ FROM conda-base as jupyterlab-base
 ARG UNAME
 #install jupyter lab extensions
 #for  details, see -> https://qiita.com/canonrock16/items/d166c93087a4aafd2db4
-RUN conda install -c conda-forge jupyterlab
+RUN source ~/.bashrc && conda install -c conda-forge jupyterlab
 
 RUN mkdir /home/${UNAME}/.tmp
 COPY ./files/jupyterlab-extensions.txt /home/${UNAME}/.tmp/
@@ -69,7 +69,7 @@ RUN cat /home/${UNAME}/.tmp/jupyterlab-extensions.txt | tr '\n' ' ' >/home/${UNA
 COPY ./files/conda-requirements.txt ./files/pip-requirements.txt /home/${UNAME}/.tmp/
 RUN conda install -c conda-forge --file /home/${UNAME}/.tmp/conda-requirements.txt && \
     conda clean --all && \
-    pip install --no-cache-dir -r /home/${UNAME}/.tmp/conda-requirements.txt
+    pip install --no-cache-dir -r /home/${UNAME}/.tmp/pip-requirements.txt
 
 
 #================================================================================
